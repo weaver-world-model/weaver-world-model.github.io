@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="WEAVER: an effective world model for robotic manipulation."
+    />
+    <meta property="og:title" content="WEAVER" />
+    <meta
+      property="og:description"
+      content="Better, faster, longer world models for robotic manipulation."
+    />
+    <title>WEAVER | An Effective World Model for Robotic Manipulation</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="scroll-progress" aria-hidden="true"></div>
+    <header class="site-header">
+      <div class="hero">
+        <h1>
+          <code>WEAVER</code>, Better, Faster, Longer: An Effective World Model
+          for Robotic Manipulation
+        </h1>
+        <p class="authors">Anonymous Author(s)</p>
+        <p class="affiliations">Anonymous Institution(s)</p>
+      </div>
+    </header>
+
+    <main>
+      <section class="section teaser-section" aria-label="WEAVER teaser">
+        <p class="section-lede teaser-lede">
+          We introduce <code>WEAVER</code>: a world model architecture that satisfies the three desiderata: (i) fidelity, (ii) consistency, and (iii) efficiency. <code>WEAVER</code> unlocks state-of-the-art performance across policy evaluation (<i>ρ</i> = 0.870 correlation with real-world success rate), policy improvement (real-world success rate improvement of 38% on top of the <i>π</i><sub>0.5</sub> robot foundation model), and test-time planning (real-world success rate improvement of 14% with a 5–10× speedup over prior WMs).
+          <!-- <code>WEAVER</code> is a robot world model that satisfies three desiderata: -->
+          <!-- high fidelity, long-horizon consistency, and efficient generation. -->
+        </p>
+        <figure class="paper-figure hero-figure">
+          <video
+            src="assets/teaser.mp4"
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            aria-label="WEAVER teaser video showing robot manipulation rollouts."
+          ></video>
+        </figure>
+
+        <div class="feature-list">
+          <article>
+            <h3>(i) Fidelity</h3>
+            <p>
+              Physically accurate predictions that correlate with reality; 
+              <code>WEAVER</code> generates multiple views used by
+              modern visuomotor policies.
+            </p>
+          </article>
+          <article>
+            <h3>(ii) Consistency</h3>
+            <p>
+              Coherent predictions over long horizons; <code>WEAVER</code> uses
+              sparse memory and short-term history to handle occlusions.
+            </p>
+          </article>
+          <article>
+            <h3>(iii) Efficiency</h3>
+            <p>
+              Fast enough for downstream planning; reward and critic heads on
+              imagined latents avoid expensive decoding and external judges.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- <section id="abstract" class="section narrow">
+        <h2>Abstract</h2>
+        <p>
+          The potential impacts of world models, or learned simulators, on
+          robotics are far-reaching: policy evaluation, policy improvement, and
+          test-time planning, all with limited real-world interaction. To unlock
+          these downstream capabilities, a world model needs to jointly satisfy
+          three desiderata: fidelity, consistency, and efficiency.
+          We propose <code>WEAVER</code>, World Estimation Across Views for Embodied
+          Reasoning: a multi-view world model trained to predict future latents
+          and reward values via a flow-matching loss. <code>WEAVER</code> distills key design
+          decisions across model architecture, memory, and prediction objectives
+          to support long-horizon dynamic manipulation tasks that have
+          confounded prior world modeling approaches. On robotic hardware, <code>WEAVER</code> demonstrates effective policy evaluation
+          with rho = 0.870 correlation to real-world success rate, policy
+          improvement with a 38% real-world success-rate gain on top of the
+          pi_0.5 robot foundation model, and test-time planning with a 14-15%
+          success-rate gain plus a 5-10x speedup over prior world models.
+        </p>
+      </section> -->
+
+      <section id="method" class="section">
+        <h2>Method</h2>
+        <figure class="paper-figure">
+          <img
+            src="assets/weaver-architecture.png"
+            alt="WEAVER architecture diagram."
+          />
+          <!-- <figcaption>
+            <strong><code>WEAVER</code> architecture.</strong> Memory, history,
+            and action sequences are encoded to generate future imaginations in
+            latent space; a latent verifier with reward and critic heads selects
+            high-advantage samples.
+          </figcaption> -->
+        </figure>
+        <div class="method-copy">
+          <p>
+            <code>WEAVER</code> is an action-conditioned latent world model for
+            long-horizon robot manipulation. It predicts future latent states,
+            decodes future observations when needed, and plans in latent space.
+            The key design decisions are:
+          </p>
+          <div class="method-prose">
+            <p>
+              <strong>Architecture and design.</strong> <code>WEAVER</code>
+              predicts multiple views and robot proprioceptive state. The
+              sparse long-term memory preserves scene context across occlusions,
+              short-term history captures recent motion, and an efficient
+              spatio-temporal Transformer generates future latents conditioned
+              on the action tokens.
+            </p>
+            <p>
+              <strong>Training and fast inference.</strong> The latent dynamics
+              model is trained with flow matching and Diffusion Forcing, which
+              supports consistent long-horizon prediction with different noise
+              levels across future steps. At inference time, KV caching and
+              rectified-flow post-training reduce the cost for planning.
+            </p>
+            <p>
+              <strong>Accurate reward and value estimation.</strong> To
+              efficiently score action chunks without decoding latents into
+              images or querying an external VLM judge, <code>WEAVER</code>
+              uses a lightweight reward head that operates directly on imagined
+              latent states and the language instruction. A critic estimates
+              returns beyond the imagined horizon.
+            </p>
+          </div>
+        </div>
+
+      </section>
+
+      <section id="results" class="section result-section">
+        <h2>World Model Evaluation</h2>
+        <p class="section-lede">
+          <code>WEAVER</code> achieves better performance than Ctrl-World on DROID
+          validation and out-of-distribution (OOD) task data while using significantly lower inference time.
+          As we decrease the number of function evaluations (NFE) to reduce
+          latency, Ctrl-World's quality decreases more significantly than
+          <code>WEAVER</code>; both models incur the highest error when
+          predicting wrist-camera viewpoints.
+        </p>
+        <figure class="paper-figure full-figure">
+          <img
+            src="assets/fid_fvd_vs_h100_time_real_history_2x4.png"
+            alt="FID and FVD versus H100 inference time for WEAVER and Ctrl-World."
+          />
+          <!-- <figcaption>
+            <strong>World-model evaluation.</strong>
+            <code>WEAVER</code>
+            generates higher-fidelity rollouts than Ctrl-World and performs
+            substantially better at low inference budgets.
+          </figcaption> -->
+        </figure>
+        <div class="video-block world-model-eval-videos" id="world-model-eval-videos">
+          <div class="world-model-controls">
+            <div class="world-model-task-row">
+              <div class="video-controls compact-control world-model-dataset-control">
+                <span class="video-label sr-only" id="world-model-dataset-label">World model evaluation dataset</span>
+                <div
+                  class="task-tabs"
+                  role="tablist"
+                  aria-labelledby="world-model-dataset-label"
+                >
+                  <button class="task-tab active" type="button" data-task="ood" role="tab">OOD</button>
+                  <button class="task-tab" type="button" data-task="droid" role="tab">DROID</button>
+                </div>
+                <select
+                  id="world-model-dataset"
+                  class="task-select task-select-hidden"
+                  aria-hidden="true"
+                  tabindex="-1"
+                >
+                  <option value="ood">OOD</option>
+                  <option value="droid">DROID</option>
+                </select>
+              </div>
+              <div class="video-controls compact-control world-model-traj-control" id="world-model-ood-traj-control">
+                <span class="video-label sr-only" id="world-model-traj-label">World model evaluation trajectory</span>
+                <div
+                  class="task-tabs"
+                  role="tablist"
+                  aria-labelledby="world-model-traj-label"
+                >
+                  <button class="task-tab active" type="button" data-task="101" role="tab">PnP Marker</button>
+                  <button class="task-tab" type="button" data-task="15" role="tab">Pour Beans</button>
+                  <button class="task-tab" type="button" data-task="30" role="tab">PnP Towel</button>
+                  <button class="task-tab" type="button" data-task="98" role="tab">Stack Bowls</button>
+                  <button class="task-tab" type="button" data-task="55" role="tab">PnP Bag</button>
+                </div>
+                <select id="world-model-traj" class="task-select task-select-hidden" aria-hidden="true" tabindex="-1">
+                  <option value="101">PnP Marker</option>
+                  <option value="15">Pour Beans</option>
+                  <option value="30">PnP Towel</option>
+                  <option value="98">Stack Bowls</option>
+                  <option value="55">PnP Bag</option>
+                </select>
+              </div>
+              <div class="video-controls compact-control world-model-traj-control" id="world-model-droid-traj-control" hidden>
+                <span class="video-label sr-only" id="world-model-droid-traj-label">DROID validation trajectory</span>
+                <div
+                  class="task-tabs"
+                  role="tablist"
+                  aria-labelledby="world-model-droid-traj-label"
+                >
+                  <button class="task-tab active" type="button" data-task="1399" role="tab">Move Bowl</button>
+                  <button class="task-tab" type="button" data-task="2799" role="tab">Coke Can to Sink</button>
+                  <button class="task-tab" type="button" data-task="3099" role="tab">Move Grey Fleece</button>
+                </div>
+                <select
+                  id="world-model-droid-traj"
+                  class="task-select task-select-hidden"
+                  aria-hidden="true"
+                  tabindex="-1"
+                >
+                  <option value="1399">Move Bowl</option>
+                  <option value="2799">Coke Can to Sink</option>
+                  <option value="3099">Move Grey Fleece</option>
+                </select>
+              </div>
+            </div>
+            <div class="video-controls compact-control world-model-nfe-control">
+              <span class="video-label sr-only" id="world-model-nfe-label">World model evaluation NFE</span>
+              <div
+                class="task-tabs"
+                role="tablist"
+                aria-labelledby="world-model-nfe-label"
+              >
+                <button class="task-tab active" type="button" data-task="8" role="tab">NFE=8</button>
+                <button class="task-tab" type="button" data-task="16" role="tab">NFE=16</button>
+                <button class="task-tab" type="button" data-task="32" role="tab">NFE=32</button>
+                <button class="task-tab" type="button" data-task="50" role="tab">NFE=50</button>
+              </div>
+              <select id="world-model-nfe" class="task-select task-select-hidden" aria-hidden="true" tabindex="-1">
+                <option value="8">NFE=8</option>
+                <option value="16">NFE=16</option>
+                <option value="32">NFE=32</option>
+                <option value="50">NFE=50</option>
+              </select>
+            </div>
+          </div>
+          <figure class="paper-figure video-figure world-model-video-figure">
+            <video
+              id="world-model-eval-video"
+              src="assets/videos/world_model_eval/traj101_nfe8.mp4"
+              autoplay
+              muted
+              loop
+              playsinline
+            ></video>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section result-section latent-verifier-section">
+        <h3 class="subsection-title">Latent Verifier and Planning</h3>
+        <p class="section-lede">
+          <code>WEAVER</code>'s latent reward is trained to match RoboMeter's task progress rewards. 
+          On OOD real trajectories, the distilled reward model can distinguish action chunks using the
+          predicted advantage. We observe that the segment with highest-advantage action sample corresponds
+          to the best imagined outcome.
+        </p>
+        <figure class="paper-figure">
+          <img
+            src="assets/weaver-reward.png"
+            alt="Reward prediction and advantage filtering plot."
+          />
+        </figure>
+      </section>
+
+      <section class="section result-section downstream-applications">
+        <h2>Downstream applications</h2>
+        <p class="section-lede">
+          By jointly satisfying (i) fidelity, (ii) consistency, and (iii) efficiency,
+          <code>WEAVER</code> supports various downstream world-model applications:
+          policy evaluation, policy improvement, and test-time planning.
+        </p>
+
+        <div class="application-block">
+          <h3>Policy Evaluation</h3>
+          <p>
+            To evaluate policies offline, we replay recorded real-world action
+            trajectories open-loop in <code>WEAVER</code> and label the imagined
+            rollouts. This turns the world model into a sandbox for ranking
+            policies without additional robot execution. We show that
+            pretrained world models often underestimate policy success, while
+            <code>WEAVER</code> better matches real rollouts than Ctrl-World.
+            The setting is difficult because rollouts span up to 40 seconds and require
+            long-horizon visual prediction; Pour Beans is especially challenging
+            due to granular dynamics. After finetuning, <code>WEAVER</code>-FT
+            further improves agreement and is better at capturing outcomes across policies. 
+          </p>
+          <figure class="paper-figure policy-eval-figure">
+            <img
+              src="assets/sr_correlation_plot.png"
+              alt="Policy evaluation plot comparing imagined and real-world success rates."
+            />
+            <!-- <figcaption>
+              <strong>Policy evaluation.</strong> Imagined success rates from
+              the fine-tuned <code>WEAVER</code> model correlate more closely
+              with real-world policy performance.
+            </figcaption> -->
+          </figure>
+
+          <div class="video-block" id="policy-eval-videos">
+            <div class="video-controls">
+              <span class="video-label sr-only" id="policy-eval-task-label">Policy evaluation task</span>
+              <div
+                class="task-tabs"
+                role="tablist"
+                aria-labelledby="policy-eval-task-label"
+              >
+                <button class="task-tab active" type="button" data-task="marker" role="tab">PnP Marker</button>
+                <button class="task-tab" type="button" data-task="pour" role="tab">Pour Beans</button>
+                <button class="task-tab" type="button" data-task="towel" role="tab">PnP Towel</button>
+                <button class="task-tab" type="button" data-task="stack" role="tab">Stack Bowls</button>
+                <button class="task-tab" type="button" data-task="bag" role="tab">PnP Bag</button>
+              </div>
+              <select id="policy-eval-task" class="task-select task-select-hidden" aria-hidden="true" tabindex="-1">
+                <option value="marker">PnP Marker</option>
+                <option value="pour">Pour Beans</option>
+                <option value="towel">PnP Towel</option>
+                <option value="stack">Stack Bowls</option>
+                <option value="bag">PnP Bag</option>
+              </select>
+            </div>
+            <figure class="paper-figure video-figure policy-eval-comparison-figure">
+              <div class="video-wrap gt-pred">
+                <video
+                  id="policy-eval-comparison-video"
+                  src="assets/videos/policy_eval/marker_eval_compare_2cams_aligned5fps_transposed.mp4"
+                  autoplay
+                  muted
+                  loop
+                  playsinline
+                ></video>
+              </div>
+            </figure>
+          </div>
+        </div>
+
+        <div class="application-block">
+          <h3>Finetuning Policy</h3>
+          <p>
+            For policy improvement, <code>WEAVER</code> samples candidate
+            action chunks, simulates their long-horizon outcomes, and estimates the advantage using the latent reward and critic heads. Only
+            high-advantage rollouts are distilled back into the base policy,
+            avoiding updates from plans predicted to be worse than the current
+            behavior. We observe that finetuning &pi;<sub>0.5</sub> with real and 
+            synthetic data generated by <code>WEAVER</code> yields the strongest success rates.
+          </p>
+          <figure class="paper-figure medium-figure">
+            <img
+              src="assets/task_success_rate_mean.png"
+              alt="Policy finetuning success rates across tasks."
+            />
+            <!-- <figcaption>
+              <strong>Policy finetuning.</strong> Finetuning
+              &pi;<sub>0.5</sub> with real and synthetic data generated by
+              <code>WEAVER</code> yields the strongest success rates.
+            </figcaption> -->
+          </figure>
+          <div class="video-block" id="policy-improvement-videos">
+            <div class="video-controls">
+              <span class="video-label sr-only" id="policy-improvement-task-label">Policy finetuning task</span>
+              <div
+                class="task-tabs"
+                role="tablist"
+                aria-labelledby="policy-improvement-task-label"
+              >
+                <button class="task-tab active" type="button" data-task="marker" role="tab">PnP Marker</button>
+                <button class="task-tab" type="button" data-task="pour" role="tab">Pour Beans</button>
+                <button class="task-tab" type="button" data-task="towel" role="tab">PnP Towel</button>
+                <button class="task-tab" type="button" data-task="stack" role="tab">Stack Bowls</button>
+                <button class="task-tab" type="button" data-task="bag" role="tab">PnP Bag</button>
+              </div>
+              <select id="policy-improvement-task" class="task-select task-select-hidden" aria-hidden="true" tabindex="-1">
+                <option value="marker">PnP Marker</option>
+                <option value="pour">Pour Beans</option>
+                <option value="towel">PnP Towel</option>
+                <option value="stack">Stack Bowls</option>
+                <option value="bag">PnP Bag</option>
+              </select>
+            </div>
+            <div class="policy-finetuning-panel">
+              <figure class="paper-figure video-figure policy-finetuning-video-figure">
+                <div class="video-wrap">
+                  <video
+                    id="policy-finetuning-video"
+                    src="assets/videos/policy_improvement/marker_views_by_method.mp4"
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                  ></video>
+                </div>
+              </figure>
+              <figure class="paper-figure policy-finetuning-plot-figure">
+                <img
+                  id="policy-finetuning-plot"
+                  src="assets/policy_finetuning/task_success_rate_pnp_marker.png"
+                  alt="Policy finetuning success rates for the selected task."
+                />
+              </figure>
+            </div>
+          </div>
+        </div>
+
+        <div class="application-block">
+          <h3>Test-time Steering</h3>
+          <p>
+            At test time, <code>WEAVER</code> performs single-chunk best-of-N search: it samples
+            multiple candidate action chunks, imagines their outcomes, and executes the one
+            with the highest predicted advantage. To reduce latency, we post-train the world
+            model with rectified flows, enabling fast latent rollouts and reward scoring.
+            This makes test-time planning practical without pixel reconstruction or external
+            VLM-as-a-judge scoring.
+            <!-- At test time, <code>WEAVER</code> performs a single-chunk
+            best-of-N search: it samples multiple candidate action chunks,
+            imagines their outcomes and executes the
+            action with the highest predicted advantage. To reduce inference latency, we 
+            post-train the world model with rectified flows. The fast latent dynamics
+            and latent reward scoring of <code>WEAVER</code> makes test-time planning practical 
+            without external VLM judging. -->
+          </p>
+          <div class="tts-panel" id="tts-panel">
+            <div class="video-controls">
+              <span class="video-label sr-only" id="tts-task-label">Test-time steering task</span>
+              <div
+                class="task-tabs"
+                role="tablist"
+                aria-labelledby="tts-task-label"
+              >
+                <button class="task-tab active" type="button" data-task="marker" role="tab">PnP Marker</button>
+                <button class="task-tab" type="button" data-task="pour" role="tab">Pour Beans</button>
+                <button class="task-tab" type="button" data-task="towel" role="tab">PnP Towel</button>
+                <button class="task-tab" type="button" data-task="stack" role="tab">Stack Bowls</button>
+                <button class="task-tab" type="button" data-task="bag" role="tab">PnP Bag</button>
+              </div>
+              <select id="tts-task" class="task-select task-select-hidden" aria-hidden="true" tabindex="-1">
+                <option value="marker">PnP Marker</option>
+                <option value="pour">Pour Beans</option>
+                <option value="towel">PnP Towel</option>
+                <option value="stack">Stack Bowls</option>
+                <option value="bag">PnP Bag</option>
+              </select>
+            </div>
+            <div class="tts-overview-panel">
+              <figure class="paper-figure video-figure tts-video-figure">
+                <div class="video-wrap gt-pred">
+                  <video
+                    id="tts-video"
+                    src="assets/videos/tts_steering/marker/combined_views_by_method.mp4"
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                  ></video>
+                </div>
+              </figure>
+              <figure class="paper-figure tts-plot-figure">
+                <img
+                  id="tts-plot"
+                  src="assets/tts_steering/task_success_rate_tts_pnp_marker.png"
+                  alt="Test-time steering success rates for the selected task."
+                />
+              </figure>
+            </div>
+
+            <div class="tts-slider-row">
+              <span class="tts-slider-label">Chunk</span>
+              <input
+                type="range"
+                id="tts-slider"
+                class="tts-slider"
+                min="1"
+                max="18"
+                value="1"
+                step="1"
+              />
+              <output id="tts-slider-value" class="tts-slider-value">1</output>
+            </div>
+
+            <figure class="paper-figure video-figure tts-chunk-figure">
+              <div class="tts-chunk-wrap">
+                <img
+                  id="tts-chunk-image"
+                  src="assets/videos/tts_steering/marker/chunk_001_transposed.png"
+                  alt="Per-chunk last-frame predictions with advantage values."
+                />
+              </div>
+              <figcaption>
+                Predicted last views of 4 candidate action samples (chunk size=15) with estimated advantage.
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section id="bibtex" class="section narrow">
+        <h2>BibTeX</h2>
+        <pre><code>@article{anonymous2026weaver,
+  title={WEAVER: Efficient World Models for Robot Video Prediction},
+  author={Anonymous Author(s)},
+  journal={Under review},
+  year={2026}
+}</code></pre>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        Website layout inspired by classic academic project pages.
+      </p>
+    </footer>
+    <script>
+      const progressBar = document.querySelector(".scroll-progress");
+
+      function updateScrollProgress() {
+        const scrollableHeight =
+          document.documentElement.scrollHeight - window.innerHeight;
+        const progress =
+          scrollableHeight > 0 ? window.scrollY / scrollableHeight : 0;
+        progressBar.style.transform = `scaleX(${Math.min(
+          Math.max(progress, 0),
+          1,
+        )})`;
+      }
+
+      updateScrollProgress();
+      window.addEventListener("scroll", updateScrollProgress, { passive: true });
+      window.addEventListener("resize", updateScrollProgress);
+
+      const delayedLoopTimers = new WeakMap();
+
+      function enableDelayedLoop(video, delayMs = 1000) {
+        video.loop = false;
+
+        function clearDelayedLoop() {
+          const timer = delayedLoopTimers.get(video);
+          if (timer !== undefined) {
+            window.clearTimeout(timer);
+            delayedLoopTimers.delete(video);
+          }
+        }
+
+        video.addEventListener("play", clearDelayedLoop);
+        video.addEventListener("loadstart", clearDelayedLoop);
+        video.addEventListener("ended", () => {
+          clearDelayedLoop();
+          const timer = window.setTimeout(() => {
+            delayedLoopTimers.delete(video);
+            video.currentTime = 0;
+            video.play().catch(() => {});
+          }, delayMs);
+          delayedLoopTimers.set(video, timer);
+        });
+      }
+
+      document.querySelectorAll("video[loop]").forEach((video) => {
+        enableDelayedLoop(video);
+      });
+
+      function bindTaskTabs(select) {
+        const controls = select.closest(".video-controls");
+        const tabs = controls ? controls.querySelectorAll(".task-tab") : [];
+        if (!tabs.length) return;
+
+        function syncTabs() {
+          tabs.forEach((tab) => {
+            const isActive = tab.dataset.task === select.value;
+            tab.classList.toggle("active", isActive);
+            tab.setAttribute("aria-selected", isActive ? "true" : "false");
+            tab.tabIndex = isActive ? 0 : -1;
+          });
+        }
+
+        tabs.forEach((tab) => {
+          tab.addEventListener("click", () => {
+            if (select.value === tab.dataset.task) return;
+            select.value = tab.dataset.task;
+            syncTabs();
+            select.dispatchEvent(new Event("change", { bubbles: true }));
+          });
+          tab.addEventListener("keydown", (event) => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+              return;
+            }
+            event.preventDefault();
+            const currentIndex = Array.from(tabs).indexOf(tab);
+            let nextIndex = currentIndex;
+            if (event.key === "ArrowLeft") {
+              nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+            } else if (event.key === "ArrowRight") {
+              nextIndex = (currentIndex + 1) % tabs.length;
+            } else if (event.key === "Home") {
+              nextIndex = 0;
+            } else if (event.key === "End") {
+              nextIndex = tabs.length - 1;
+            }
+            tabs[nextIndex].focus();
+            tabs[nextIndex].click();
+          });
+        });
+
+        select.addEventListener("change", syncTabs);
+        syncTabs();
+      }
+
+      document.querySelectorAll(".task-select").forEach(bindTaskTabs);
+
+      const worldModelDataset = document.querySelector("#world-model-dataset");
+      const worldModelTraj = document.querySelector("#world-model-traj");
+      const worldModelDroidTraj = document.querySelector("#world-model-droid-traj");
+      const worldModelNfe = document.querySelector("#world-model-nfe");
+      const worldModelVideo = document.querySelector("#world-model-eval-video");
+      const worldModelOodControl = document.querySelector("#world-model-ood-traj-control");
+      const worldModelDroidControl = document.querySelector("#world-model-droid-traj-control");
+      if (
+        worldModelDataset &&
+        worldModelTraj &&
+        worldModelDroidTraj &&
+        worldModelNfe &&
+        worldModelVideo
+      ) {
+        function updateWorldModelVideo() {
+          const isDroid = worldModelDataset.value === "droid";
+          const trajectory = isDroid ? worldModelDroidTraj.value : worldModelTraj.value;
+          const prefix = isDroid ? "droid_traj" : "traj";
+          if (worldModelOodControl) worldModelOodControl.hidden = isDroid;
+          if (worldModelDroidControl) worldModelDroidControl.hidden = !isDroid;
+          worldModelVideo.src = `assets/videos/world_model_eval/${prefix}${trajectory}_nfe${worldModelNfe.value}.mp4`;
+          worldModelVideo.load();
+          worldModelVideo.play().catch(() => {});
+        }
+
+        worldModelDataset.addEventListener("change", updateWorldModelVideo);
+        worldModelTraj.addEventListener("change", updateWorldModelVideo);
+        worldModelDroidTraj.addEventListener("change", updateWorldModelVideo);
+        worldModelNfe.addEventListener("change", updateWorldModelVideo);
+        updateWorldModelVideo();
+      }
+
+      const policyEvalTask = document.querySelector("#policy-eval-task");
+      if (policyEvalTask) {
+        const policyEvalVideo = document.querySelector("#policy-eval-comparison-video");
+        policyEvalTask.addEventListener("change", (event) => {
+          const task = event.target.value;
+          if (policyEvalVideo) {
+            policyEvalVideo.src = `assets/videos/policy_eval/${task}_eval_compare_2cams_aligned5fps_transposed.mp4`;
+            policyEvalVideo.load();
+            policyEvalVideo.play().catch(() => {});
+          }
+        });
+      }
+
+      const policyImprovementTask = document.querySelector(
+        "#policy-improvement-task",
+      );
+      if (policyImprovementTask) {
+        const policyFinetuningVideo = document.querySelector(
+          "#policy-finetuning-video",
+        );
+        const policyFinetuningPlot = document.querySelector(
+          "#policy-finetuning-plot",
+        );
+        const policyFinetuningPlots = {
+          marker: "task_success_rate_pnp_marker.png",
+          pour: "task_success_rate_pour_beans.png",
+          towel: "task_success_rate_pnp_towel.png",
+          stack: "task_success_rate_stack_bowls.png",
+          bag: "task_success_rate_pnp_bag.png",
+        };
+        policyImprovementTask.addEventListener("change", (event) => {
+          const task = event.target.value;
+          if (policyFinetuningVideo) {
+            policyFinetuningVideo.src = `assets/videos/policy_improvement/${task}_views_by_method.mp4`;
+            policyFinetuningVideo.load();
+            policyFinetuningVideo.play().catch(() => {});
+          }
+          if (policyFinetuningPlot) {
+            policyFinetuningPlot.src = `assets/policy_finetuning/${policyFinetuningPlots[task]}`;
+          }
+        });
+      }
+
+      const ttsPanel = document.querySelector("#tts-panel");
+      if (ttsPanel) {
+        const TTS_CHUNK_COUNTS = {
+          marker: 18,
+          pour: 14,
+          towel: 13,
+          stack: 23,
+          bag: 17,
+        };
+        const ttsTask = ttsPanel.querySelector("#tts-task");
+        const ttsVideo = ttsPanel.querySelector("#tts-video");
+        const ttsPlot = ttsPanel.querySelector("#tts-plot");
+        const ttsImage = ttsPanel.querySelector("#tts-chunk-image");
+        const ttsSlider = ttsPanel.querySelector("#tts-slider");
+        const ttsSliderValue = ttsPanel.querySelector("#tts-slider-value");
+
+        const pad3 = (n) => String(n).padStart(3, "0");
+        const TTS_PLOTS = {
+          marker: "task_success_rate_tts_pnp_marker.png",
+          pour: "task_success_rate_tts_pour_beans.png",
+          towel: "task_success_rate_tts_pnp_towel.png",
+          stack: "task_success_rate_tts_stack_bowls.png",
+          bag: "task_success_rate_tts_pnp_bag.png",
+        };
+
+        function showChunk(task, index) {
+          ttsImage.src = `assets/videos/tts_steering/${task}/chunk_${pad3(index)}_transposed.png`;
+          ttsSliderValue.value = index;
+        }
+
+        function selectTask(task) {
+          const total = TTS_CHUNK_COUNTS[task];
+          ttsSlider.max = total;
+          ttsSlider.value = 1;
+          if (ttsVideo) {
+            ttsVideo.src = `assets/videos/tts_steering/${task}/combined_views_by_method.mp4`;
+            ttsVideo.load();
+            ttsVideo.play().catch(() => {});
+          }
+          if (ttsPlot) {
+            ttsPlot.src = `assets/tts_steering/${TTS_PLOTS[task]}`;
+          }
+          showChunk(task, 1);
+        }
+
+        ttsSlider.addEventListener("input", (event) => {
+          showChunk(ttsTask.value, Number(event.target.value));
+        });
+        ttsTask.addEventListener("change", (event) => {
+          selectTask(event.target.value);
+        });
+
+        selectTask(ttsTask.value);
+      }
+    </script>
+  </body>
+</html>
