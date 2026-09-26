@@ -300,29 +300,18 @@
         <div class="application-block">
           <h3>Policy Evaluation</h3>
           <p>
-            To evaluate policies offline, we replay recorded real-world action
-            trajectories open-loop in <code>WEAVER</code> and label the imagined
-            rollouts. This turns the world model into a sandbox for ranking
-            policies without additional robot execution. We show that
-            pretrained world models often underestimate policy success, while
-            <code>WEAVER</code> better matches real rollouts than Ctrl-World
-            (<i>ρ</i> = 0.517 vs. 0.410).
-            The setting is difficult because rollouts span up to 40 seconds and require
-            long-horizon visual prediction; Pour Beans is especially challenging
-            due to granular dynamics.
+            We replay recorded real-world action trajectories open-loop in
+            <code>WEAVER</code> and label the imagined rollouts, turning the world model
+            into a sandbox for ranking policies without robot execution. Rollouts run up
+            to 40 seconds, so prediction errors compound. Pretrained world models tend to
+            underestimate policy success; <code>WEAVER</code> tracks real rollouts more
+            closely than Ctrl-World (<i>ρ</i> = 0.517 vs. 0.410).
           </p>
           <p>
-            Finetuning helps both world models, but not equally:
-            <code>WEAVER</code>-FT outperforms Ctrl-World-FT across metrics
-            (<i>ρ</i> = 0.817 vs. 0.677, MMRV 0.104 vs. 0.200). The gap is clearest in what
-            each model actually imagines in the rollouts below. For Pour Beans, only
-            <code>WEAVER</code>-FT predicts the beans scattering across the table; every
-            other model, Ctrl-World-FT included, leaves the table clean. For Stack Bowls,
-            Ctrl-World and Ctrl-World-FT leave the two bowls sitting side by side and
-            <code>WEAVER</code> loses the second bowl entirely, while only
-            <code>WEAVER</code>-FT nests one bowl inside the other. For PnP Towel, only
-            <code>WEAVER</code>-FT settles the towel inside the basket &mdash; the
-            baselines leave it hovering above the rim.
+            Finetuning helps both models, but unevenly: <code>WEAVER</code>-FT leads
+            Ctrl-World-FT on every metric (<i>ρ</i> = 0.817 vs. 0.677, MMRV 0.104 vs.
+            0.200). The rollouts below show why &mdash; only <code>WEAVER</code>-FT
+            scatters the beans, nests the bowls, and lands the towel in the basket.
           </p>
           <figure class="paper-figure policy-eval-figure">
             <img
