@@ -310,10 +310,12 @@
             task-specific finetuning.
           </p>
           <p>
-            Finetuning helps both models, but unevenly: <code>WEAVER</code>-FT leads
+            Finetuning helps both models: <code>WEAVER</code>-FT leads
             Ctrl-World-FT on every metric (<i>ρ</i> = 0.817 vs. 0.677, MMRV 0.104 vs.
-            0.200). The rollouts below show why &mdash; only <code>WEAVER</code>-FT
-            scatters the beans, stacks the bowls, and lands the towel in the basket.
+            0.200). In the rollouts below, only <code>WEAVER</code>-FT predicts the same
+            outcome as the ground-truth rollout from the policy on Pour Beans, Stack
+            Bowls, and PnP Towel: the beans scatter across the table, the bowls stack,
+            and the towel lands inside the basket.
           </p>
           <figure class="paper-figure policy-eval-figure">
             <img
