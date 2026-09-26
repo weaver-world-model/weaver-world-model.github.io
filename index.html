@@ -305,13 +305,15 @@
             into a sandbox for ranking policies without robot execution. Rollouts run up
             to 40 seconds, so prediction errors compound. Pretrained world models tend to
             underestimate policy success; <code>WEAVER</code> tracks real rollouts more
-            closely than Ctrl-World (<i>ρ</i> = 0.517 vs. 0.410).
+            closely than Ctrl-World (<i>ρ</i> = 0.517 vs. 0.410). This compares the two
+            pretrained models only &mdash; both are trained on DROID with no
+            task-specific finetuning.
           </p>
           <p>
             Finetuning helps both models, but unevenly: <code>WEAVER</code>-FT leads
             Ctrl-World-FT on every metric (<i>ρ</i> = 0.817 vs. 0.677, MMRV 0.104 vs.
             0.200). The rollouts below show why &mdash; only <code>WEAVER</code>-FT
-            scatters the beans, nests the bowls, and lands the towel in the basket.
+            scatters the beans, stacks the bowls, and lands the towel in the basket.
           </p>
           <figure class="paper-figure policy-eval-figure">
             <img
